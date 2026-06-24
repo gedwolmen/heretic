@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
+# vim: set ts=2 sw=2 tw=0 fo=jcroql
+version: 2
+
+project_name: heretic
+
+includes:
+  - from_url:
+      url: gedwolmen/meta/main/notarize.yaml
+
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
+  license: "FSL-1.1-MIT"
+  homepage: "https://charm.land/heretic"
+  description: "A powerful terminal-based AI assistant for developers, providing intelligent coding assistance directly in your terminal."
+  full_description: "A powerful terminal-based AI assistant for developers, providing intelligent coding assistance directly in your terminal."
+  maintainers:
+    - "kujtimiihoxha <kujtim@charm.sh>"
+
+nightly:
+  publish_release: true
+  keep_single_release: true
+  version_template: "{{ incminor .Version }}-nightly"
+
+snapshot:
+  version_template: "0.0.0-{{ .Timestamp }}"
+
+before:
+  hooks:
+    - go mod tidy
+    - rm -rf completions
+    - mkdir completions
+    - rm -rf manpages
+    - mkdir manpages
+    - sh -c 'go run . completion bash >./completions/heretic.bash'
+    - sh -c 'go run . completion zsh >./completions/heretic.zsh'
+    - sh -c 'go run . completion fish >./completions/heretic.fish'
+    - sh -c 'go run . man | gzip -c >./manpages/heretic.1.gz'
+
+# gomod:
+#   proxy: true
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+      - GOEXPERIMENT=greenteagc
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+      - openbsd
+      - netbsd
+      - android
+    goarch:
+      - amd64
+      - arm64
+      - "386"
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: android
+        goarch: amd64
+      - goos: android
+        goarch: arm
+      - goos: android
+        goarch: "386"
+      - goos: windows
+        goarch: arm
+    ldflags:
+      - -s -w -X github.com/gedwolmen/heretic/internal/version.Version={{.Version}}
+    flags:
+      - -trimpath
+
+archives:
+  - name_template: >-
+      heretic_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- with .Arm}}v{{ . }}{{ end }}
+    wrap_in_directory: true
+    files:
+      - README*
+      - LICENSE*
+      - manpages/*
+      - completions/*
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: "checksums.txt"
+
