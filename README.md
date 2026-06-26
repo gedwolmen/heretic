@@ -29,6 +29,32 @@ a rich TUI client built on [Bubble Tea][bubbletea].
 - **Cross-platform** — linux, darwin, windows, freebsd, openbsd, netbsd,
   android (amd64/arm64/386/arm).
 
+## Install
+
+Install or update the latest release binary (with checksum verification) via the
+install script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gedwolmen/heretic/main/install.sh | bash
+```
+
+Pin a version or choose a destination:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gedwolmen/heretic/main/install.sh | bash -s -- --version v1.2.3 --install-dir "$HOME/.local/bin"
+```
+
+The script downloads the matching archive from [GitHub Releases][releases]. If no
+prebuilt archive exists for your platform, it falls back to
+`go install github.com/gedwolmen/heretic@latest` (requires Go). Re-running the
+installer updates to the latest version. See `--help` for options.
+
+Alternatively, from source (requires Go 1.26+):
+
+```bash
+go install github.com/gedwolmen/heretic@latest
+```
+
 ## Quick start
 
 Requires [Go](https://go.dev) 1.26+ and [Task](https://taskfile.dev).
@@ -88,6 +114,7 @@ Run `task fmt` and `task lint` before submitting.
 [MIT](LICENSE)
 
 [crush]: https://github.com/charmbracelet/crush
+[releases]: https://github.com/gedwolmen/heretic/releases
 [bubbletea]: https://github.com/charmbracelet/bubbletea
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [chroma]: https://github.com/alecthomas/chroma
