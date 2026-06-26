@@ -93,9 +93,86 @@ func parseMCPServers(data []byte) map[string]MCPConfig {
 	return out
 }
 
+// opencodeMCPFile is the shape of opencode's opencode.json: a top-level "mcp"
+// object (not "mcpServers" as in Claude/Cursor).
+type opencodeMCPFile struct {
+	MCP map[string]json.RawMessage `json:"mcp"`
+}
+
+// opencodeServer is the per-server shape in opencode's config. Opencode uses
+// "command" as an array (not command+args), "environment" (not env), "type"
+// is "local" (stdio) or "remote", and an "enabled" flag.
+type opencodeServer struct {
+	Type        string            `json:"type"`
+	Command     []string          `json:"command"`
+	URL         string            `json:"url"`
+	Environment map[string]string `json:"environment"`
+	Headers     map[string]string `json:"headers"`
+	Enabled     *bool             `json:"enabled"`
+}
+
+// normalizeOpenCode converts an opencode server entry into an [MCPConfig].
+// Returns ok=false for disabled or unclassifiable entries.
+func normalizeOpenCode(d opencodeServer) (MCPConfig, bool) {
+	if d.Enabled != nil && !*d.Enabled {
+		return MCPConfig{}, false
+	}
+	switch strings.ToLower(strings.TrimSpace(d.Type)) {
+	case "remote":
+		if d.URL == "" {
+			return MCPConfig{}, false
+		}
+		return MCPConfig{
+			Type:    MCPSSE,
+			URL:     d.URL,
+			Headers: d.Headers,
+			Env:     d.Environment,
+		}, true
+	default: // "local" or empty
+		if len(d.Command) == 0 {
+			return MCPConfig{}, false
+		}
+		cmd := d.Command[0]
+		var args []string
+		if len(d.Command) > 1 {
+			args = d.Command[1:]
+		}
+		return MCPConfig{
+			Type:    MCPStdio,
+			Command: cmd,
+			Args:    args,
+			Env:     d.Environment,
+		}, true
+	}
+}
+
+// parseOpenCodeMCP parses the "mcp" object from an opencode-style config
+// file. Unparseable individual entries are skipped rather than failing the
+// whole file.
+func parseOpenCodeMCP(data []byte) map[string]MCPConfig {
+	var f opencodeMCPFile
+	if err := json.Unmarshal(data, &f); err != nil {
+		slog.Debug("Failed to parse opencode MCP config file", "error", err)
+		return nil
+	}
+	out := make(map[string]MCPConfig)
+	for name, raw := range f.MCP {
+		var d opencodeServer
+		if err := json.Unmarshal(raw, &d); err != nil {
+			slog.Debug("Failed to parse opencode MCP server entry", "name", name, "error", err)
+			continue
+		}
+		if m, ok := normalizeOpenCode(d); ok {
+			out[name] = m
+		}
+	}
+	return out
+}
+
 // mcpConfigPaths returns the well-known MCP config file locations on the host,
 // in precedence order (first source wins on name collisions). workingDir adds
-// project-level Claude Code (.mcp.json) and Cursor (.cursor/mcp.json) files.
+// project-level Claude Code (.mcp.json), Cursor (.cursor/mcp.json), and
+// opencode (opencode.json) files.
 func mcpConfigPaths(workingDir string) []string {
 	var paths []string
 
@@ -117,11 +194,15 @@ func mcpConfigPaths(workingDir string) []string {
 	// Claude Code (global ~/.claude.json carries a top-level mcpServers).
 	paths = append(paths, filepath.Join(home.Dir(), ".claude.json"))
 
+	// opencode (global ~/.config/opencode/opencode.json uses "mcp" key).
+	paths = append(paths, filepath.Join(home.Config(), "opencode", "opencode.json"))
+
 	// Project-level.
 	if workingDir != "" {
 		paths = append(paths,
 			filepath.Join(workingDir, ".mcp.json"),
 			filepath.Join(workingDir, ".cursor", "mcp.json"),
+			filepath.Join(workingDir, "opencode.json"),
 		)
 	}
 
@@ -129,8 +210,8 @@ func mcpConfigPaths(workingDir string) []string {
 }
 
 // DiscoverInstalledMCPs scans well-known MCP configuration files on the host
-// (Claude Desktop, Cursor, Claude Code, and the project's .mcp.json) and
-// returns the servers normalized to [MCPConfig]. On name collisions between
+// (Claude Desktop, Cursor, Claude Code, opencode, and the project's .mcp.json)
+// and returns the servers normalized to [MCPConfig]. On name collisions between
 // sources, the first source encountered wins. Missing or unparseable files are
 // skipped silently.
 func DiscoverInstalledMCPs(workingDir string) map[string]MCPConfig {
@@ -140,7 +221,13 @@ func DiscoverInstalledMCPs(workingDir string) map[string]MCPConfig {
 		if err != nil {
 			continue
 		}
-		for name, m := range parseMCPServers(data) {
+		var servers map[string]MCPConfig
+		if filepath.Base(p) == "opencode.json" {
+			servers = parseOpenCodeMCP(data)
+		} else {
+			servers = parseMCPServers(data)
+		}
+		for name, m := range servers {
 			if _, exists := out[name]; exists {
 				continue
 			}
