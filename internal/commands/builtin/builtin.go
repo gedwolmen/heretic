@@ -98,7 +98,7 @@ func parse(name, content string) commands.CustomCommand {
 		return out
 	}
 	// Parse YAML-ish key: value lines.
-	var desc string
+	var desc, argHint string
 	for _, line := range lines[1:closeIdx] {
 		colon := strings.Index(line, ":")
 		if colon < 0 {
@@ -106,16 +106,21 @@ func parse(name, content string) commands.CustomCommand {
 		}
 		key := strings.TrimSpace(line[:colon])
 		val := strings.TrimSpace(line[colon+1:])
-		val = strings.Trim(val, `"`)
+		// Strip a single pair of surrounding quotes so empty hints
+		// like '' or "" parse to a genuinely empty string.
+		val = strings.Trim(val, `"'`)
 		switch key {
 		case "description":
 			desc = val
+		case "argument-hint":
+			argHint = val
 		}
 	}
 	// Extract $ARG_NAME placeholders from the body to populate
 	// Arguments (matching the existing custom-command convention).
 	body := strings.TrimSpace(content[closeIdx+1:])
 	out.Content = body
+	out.ArgumentHint = argHint
 	out.Arguments = extractArgNames(body)
 	_ = desc
 	return out

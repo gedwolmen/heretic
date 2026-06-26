@@ -49,7 +49,12 @@ type CustomCommand struct {
 	// Builtin is true for the OmO-port commands that ship with
 	// heretic (ralph-loop, ulw-loop, refactor, etc.). Used by the UI
 	// to group builtins vs user commands.
-	Builtin   bool
+	Builtin bool
+	// ArgumentHint is the usage hint from a builtin command's
+	// frontmatter (e.g. '"task description" [--max-iterations=N]').
+	// When non-empty the command expects user input, so the UI inlines
+	// it into the editor instead of running it immediately.
+	ArgumentHint string
 	// Skill is set when this command represents a user-invocable skill
 	Skill *skills.Skill
 }

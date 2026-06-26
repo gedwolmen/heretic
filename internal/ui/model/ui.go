@@ -279,6 +279,13 @@ type UI struct {
 	customCommands []commands.CustomCommand
 	mcpPrompts     []commands.MCPPrompt
 
+	// inlineCommand holds a slash command that was inlined into the
+	// editor so the user can type its argument inline (e.g.
+	// "/ralph-loop fix the bug"). When non-nil, the editor value is
+	// expected to start with the invocation; on send the typed text is
+	// injected into the command body and dispatched.
+	inlineCommand *inlineCommandState
+
 	// forceCompactMode tracks whether compact mode is forced by user toggle
 	forceCompactMode bool
 
@@ -300,8 +307,8 @@ type UI struct {
 	// currentMode is the most recent IntentGate mode (ultrawork,
 	// search, analyze, team) detected on the first user message.
 	currentMode string
-	promptQueue        int
-	pillsView          string
+	promptQueue int
+	pillsView   string
 
 	// Todo spinner
 	todoSpinner    spinner.Model
@@ -1523,7 +1530,7 @@ func (m *UI) handleDialogMsg(msg tea.Msg) tea.Cmd {
 	case dialog.ActionSelectAgent:
 		m.dialog.CloseDialog(dialog.AgentSwitchID)
 		m.setAgent(msg.Agent)
-		cmds = append(cmds, util.CmdHandler(util.NewInfoMsg("Switched to " + string(msg.Agent) + " agent")))
+		cmds = append(cmds, util.CmdHandler(util.NewInfoMsg("Switched to "+string(msg.Agent)+" agent")))
 
 	// Open dialog message.
 	case dialog.ActionOpenDialog:
@@ -1738,6 +1745,13 @@ func (m *UI) handleDialogMsg(msg tea.Msg) tea.Cmd {
 		}
 		cmds = append(cmds, m.sendMessage(content))
 		m.dialog.CloseFrontDialog()
+	case dialog.ActionInlineCommand:
+		// Inline the command into the editor so the user can type its
+		// argument right after the invocation, then dispatch on send.
+		m.dialog.CloseFrontDialog()
+		if cmd := m.startInlineCommand(msg.Invocation, msg.Content, msg.Arguments); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
 	case dialog.ActionAttachSkill:
 		m.dialog.CloseFrontDialog()
 		cmds = append(cmds, m.attachSkill(msg.ID, msg.Name))
@@ -2095,6 +2109,40 @@ func (m *UI) handleKeyPressMsg(msg tea.KeyPressMsg) tea.Cmd {
 						cmds = append(cmds, cmd)
 					}
 					break
+				}
+
+				// Inline slash command: if a command was placed into the
+				// editor (e.g. "/ralph-loop fix the bug"), inject the
+				// typed argument into the command body and dispatch that
+				// instead of the raw editor text.
+				if m.inlineCommand != nil {
+					inv := m.inlineCommand.invocation
+					content := m.inlineCommand.content
+					arguments := m.inlineCommand.arguments
+					m.inlineCommand = nil
+
+					tval := strings.TrimSpace(value)
+					var userInput string
+					matched := false
+					if tval == inv {
+						matched = true
+					} else if strings.HasPrefix(tval, inv+" ") {
+						matched = true
+						userInput = tval[len(inv)+1:]
+					}
+
+					if matched {
+						finalContent := buildInlineCommandContent(content, userInput, arguments)
+						attachments := m.attachments.List()
+						m.attachments.Reset()
+						m.textarea.Reset()
+						if cmd := m.handleTextareaHeightChange(prevHeight); cmd != nil {
+							cmds = append(cmds, cmd)
+						}
+						m.randomizePlaceholders()
+						m.historyReset()
+						return tea.Batch(m.sendMessage(finalContent, attachments...), m.loadPromptHistory())
+					}
 				}
 
 				// Otherwise, send the message

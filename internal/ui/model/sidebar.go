@@ -147,6 +147,8 @@ func (m *UI) drawSidebar(scr uv.Screen, area uv.Rectangle) {
 			Hyper: m.com.IsHyper(),
 		})
 	}
+	// Center the sidebar ASCII art within the available width.
+	sidebarLogo = lipgloss.NewStyle().Width(width).Align(lipgloss.Center).Render(sidebarLogo)
 	blocks := []string{
 		sidebarLogo,
 		title,

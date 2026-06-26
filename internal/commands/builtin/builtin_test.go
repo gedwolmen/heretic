@@ -71,6 +71,28 @@ This is the body of the test command.`
 	require.Equal(t, "test", c.Name)
 	require.Contains(t, c.Content, "# Body")
 	require.Contains(t, c.Content, "This is the body of the test command.")
+	// The argument-hint frontmatter field is parsed into ArgumentHint
+	// so the UI can detect commands that expect user input.
+	require.NotEmpty(t, c.ArgumentHint, "argument-hint should be parsed")
+	require.Contains(t, c.ArgumentHint, "task")
+}
+
+func TestLoad_ArgumentHints(t *testing.T) {
+	t.Parallel()
+	cmds, err := Load()
+	require.NoError(t, err)
+	byName := make(map[string]string, len(cmds))
+	for _, c := range cmds {
+		byName[c.Name] = c.ArgumentHint
+	}
+	// Commands that accept user input expose an argument-hint.
+	for _, name := range []string{"ralph-loop", "ulw-loop", "refactor", "start-work", "handoff", "hyperplan"} {
+		require.NotEmpty(t, byName[name], "command %q should have a non-empty argument-hint", name)
+	}
+	// Commands that take no arguments have an empty argument-hint.
+	for _, name := range []string{"cancel-ralph", "stop-continuation", "remove-ai-slops"} {
+		require.Empty(t, byName[name], "command %q should have an empty argument-hint", name)
+	}
 }
 
 func TestParse_NoFrontmatter(t *testing.T) {

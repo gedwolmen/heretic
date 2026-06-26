@@ -240,7 +240,7 @@ func (a *AgentSwitch) Draw(scr uv.Screen, area uv.Rectangle) *tea.Cursor {
 			UnderlineIndex: underlineIdx[name],
 		})
 	}
-	row := common.ButtonGroup(t, btns, " ")
+	row := common.ButtonGroup(t, btns, "  ")
 
 	// Description for the selected agent. Rendered as a fixed-width
 	// pane so it doesn't reflow when the selection moves. We also
@@ -279,7 +279,7 @@ func (a *AgentSwitch) Draw(scr uv.Screen, area uv.Rectangle) *tea.Cursor {
 		stateStyled,
 	)
 	rc := NewRenderContext(t, width)
-	rc.Title = "Switch agent"
+	rc.Title = "Select Agent"
 	rc.AddPart(body)
 	view := rc.Render()
 	DrawCenter(scr, area, view)

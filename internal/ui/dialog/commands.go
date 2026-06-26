@@ -394,16 +394,6 @@ func (c *Commands) setCommandItems(commandType CommandType) {
 		}
 	case UserCommands:
 		for _, cmd := range c.customCommands {
-			var action Action
-			if cmd.Skill != nil {
-				action = ActionAttachSkill{ID: cmd.Skill.SkillFilePath, Name: cmd.Skill.Name}
-			} else {
-				action = ActionRunCustomCommand{
-					Content:   cmd.Content,
-					Arguments: cmd.Arguments,
-					Skill:     cmd.Skill,
-				}
-			}
 			// Builtin commands are displayed with a leading slash
 			// (e.g. "/ralph-loop") so they look like OmO-style
 			// slash commands in the picker. The "builtin" tag is
@@ -421,6 +411,30 @@ func (c *Commands) setCommandItems(commandType CommandType) {
 					desc = first + "  (" + desc + ")"
 				}
 			}
+
+			var action Action
+			switch {
+			case cmd.Skill != nil:
+				action = ActionAttachSkill{ID: cmd.Skill.SkillFilePath, Name: cmd.Skill.Name}
+			case cmd.Builtin && (cmd.ArgumentHint != "" || len(cmd.Arguments) > 0):
+				// Builtin slash commands that expect user input are
+				// inlined into the editor so the user can type the
+				// argument right after the invocation (e.g.
+				// "/ralph-loop fix the bug") instead of opening a
+				// separate arguments dialog.
+				action = ActionInlineCommand{
+					Invocation: name,
+					Content:    cmd.Content,
+					Arguments:  cmd.Arguments,
+				}
+			default:
+				action = ActionRunCustomCommand{
+					Content:   cmd.Content,
+					Arguments: cmd.Arguments,
+					Skill:     cmd.Skill,
+				}
+			}
+
 			item := NewCommandItem(c.com.Styles, "custom_"+cmd.ID, name, "", action)
 			if cmd.Skill != nil {
 				item = item.WithDescription(cmd.Skill.Description)

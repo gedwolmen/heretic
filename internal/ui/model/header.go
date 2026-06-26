@@ -70,6 +70,7 @@ func (h *header) drawHeader(
 	detailsOpen bool,
 	width int,
 	hyperCredits *int,
+	mode string,
 ) {
 	t := h.com.Styles
 	if width != h.width || compact != h.compact {
@@ -103,6 +104,7 @@ func (h *header) drawHeader(
 		detailsOpen,
 		availDetailWidth,
 		hyperCredits,
+		mode,
 	)
 
 	remainingWidth := width -
@@ -135,6 +137,7 @@ func renderHeaderDetails(
 	detailsOpen bool,
 	availWidth int,
 	hyperCredits *int,
+	mode string,
 ) string {
 	t := com.Styles
 
@@ -165,6 +168,14 @@ func renderHeaderDetails(
 	agentPill := t.Header.KeystrokeTip.Render("agent:") +
 		" " + t.Header.Keystroke.Render(agentName)
 	parts = append(parts, agentPill)
+
+	// Show the active IntentGate mode (ultrawork, search, etc.) if
+	// one was detected. Skip when empty (no mode = no pill).
+	if mode != "" {
+		modePill := t.Header.KeystrokeTip.Render("mode:") +
+			" " + t.Header.Keystroke.Render(mode)
+		parts = append(parts, modePill)
+	}
 
 	if com.IsHyper() && hyperCredits != nil {
 		hc := t.Header.HypercreditIcon.Render(styles.HypercreditIcon) + " " + t.Header.Percentage.Render(common.FormatCredits(*hyperCredits))
