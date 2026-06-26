@@ -77,6 +77,21 @@ type (
 		Args      map[string]string // Actual argument values
 		Skill     *skills.Skill     // Set when this is a skill command
 	}
+	// ActionInlineCommand is sent when a slash command that expects
+	// user input is selected from the picker. Instead of running
+	// immediately, the command's invocation (e.g. "/ralph-loop") is
+	// placed into the editor so the user can type the argument inline
+	// right after it. On send, the typed text is injected into Content
+	// and dispatched as the prompt.
+	ActionInlineCommand struct {
+		// Invocation is the command token placed into the editor,
+		// without a trailing space (e.g. "/ralph-loop").
+		Invocation string
+		// Content is the command body, with optional $ARG placeholders.
+		Content string
+		// Arguments are the named $ARG placeholders, if any.
+		Arguments []commands.Argument
+	}
 	// ActionAttachSkill is sent when a skill is selected from the commands
 	// dialog to be attached to the conversation as a markdown attachment.
 	ActionAttachSkill struct {
