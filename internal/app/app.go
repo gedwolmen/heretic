@@ -132,6 +132,13 @@ func New(ctx context.Context, conn *sql.DB, store *config.ConfigStore, skillsMgr
 	// Check for updates in the background.
 	go app.checkForUpdates(ctx)
 
+	// Auto-discover MCP servers installed on the host (Claude Desktop,
+	// Cursor, Claude Code) and merge them into the in-memory config before
+	// initializing MCP clients. User-declared servers always win.
+	if n := store.MergeDiscoveredMCPs(); n > 0 {
+		slog.Info("Auto-detected MCP servers from host", "count", n)
+	}
+
 	go mcp.Initialize(ctx, app.Permissions, store)
 
 	// Release the shared database connection on shutdown. The pool

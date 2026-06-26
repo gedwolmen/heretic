@@ -18,6 +18,8 @@ a rich TUI client built on [Bubble Tea][bubbletea].
   providers (Ollama, LM Studio, OllamaX, LiteLLM) auto-discovered.
 - **Tools** — content-addressed `hashline` edits, file/shell/grep/glob, LSP
   tools, sub-agents, and `mcp_`-prefixed MCP tools.
+- **MCP auto-detect** — discovers MCP servers from Claude Desktop, Cursor, and
+  Claude Code (`.mcp.json`) configs at startup; user config always wins.
 - **Embedded POSIX shell** — [`mvdan.cc/sh/v3`][mvdan-sh] on every platform
   (no bash/cygwin/WSL needed); in-process `jq`.
 - **Hooks** — user shell scripts on agent events (`PreToolUse`), cross-platform.

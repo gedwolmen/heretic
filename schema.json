@@ -29,6 +29,77 @@
       "additionalProperties": false,
       "type": "object"
     },
+    "BackgroundAgentConfig": {
+      "properties": {
+        "model_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Default concurrent background agents per provider/model pair",
+          "default": 5
+        },
+        "provider_concurrency": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object",
+          "description": "Per-provider concurrency overrides"
+        },
+        "queue_on_full": {
+          "type": "boolean",
+          "description": "Queue requests when concurrency limit is reached (vs reject)",
+          "default": true
+        },
+        "max_queue_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Max pending requests per slot pool (0=unlimited)",
+          "default": 0
+        },
+        "parent_wake_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "Parent wake poll interval in ms",
+          "default": 30000
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "BoulderStateConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable boulder state tracking",
+          "default": false
+        },
+        "state_file": {
+          "type": "string",
+          "description": "Override the default boulder state file location"
+        },
+        "max_history": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum history entries to retain",
+          "default": 100
+        },
+        "auto_advance": {
+          "type": "boolean",
+          "description": "Auto-advance to next pending entry on completion",
+          "default": true
+        },
+        "worktree_enabled": {
+          "type": "boolean",
+          "description": "Create a per-boulder git worktree",
+          "default": true
+        },
+        "worktree_base_branch": {
+          "type": "string",
+          "description": "Base branch for new boulder worktrees (default: current HEAD)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "Completions": {
       "properties": {
         "max_depth": {
@@ -99,6 +170,41 @@
           },
           "type": "object",
           "description": "User-defined shell commands that fire on hook events (e.g. PreToolUse)"
+        },
+        "team_mode": {
+          "$ref": "#/$defs/TeamModeConfig",
+          "description": "Team mode (parallel multi-agent coordination)"
+        },
+        "background_agent": {
+          "$ref": "#/$defs/BackgroundAgentConfig",
+          "description": "Background agent concurrency limits"
+        },
+        "boulder_state": {
+          "$ref": "#/$defs/BoulderStateConfig",
+          "description": "Boulder state (work tracking) configuration"
+        },
+        "delegate": {
+          "$ref": "#/$defs/DelegateConfig",
+          "description": "Subagent delegation settings"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DelegateConfig": {
+      "properties": {
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Per-provider/model concurrency limit",
+          "default": 5
+        },
+        "per_provider": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object",
+          "description": "Per-provider overrides"
         }
       },
       "additionalProperties": false,
@@ -500,6 +606,11 @@
           "description": "Automatically setup LSPs based on root markers",
           "default": true
         },
+        "auto_detect_mcp": {
+          "type": "boolean",
+          "description": "Automatically discover MCP servers from Claude Desktop, Cursor, and Claude Code (.mcp.json) configs on the host and merge them at startup. Servers already declared in the heretic config are not overwritten.",
+          "default": true
+        },
         "progress": {
           "type": "boolean",
           "description": "Show indeterminate progress updates during long operations",
@@ -755,6 +866,76 @@
           "type": "boolean",
           "description": "Enable transparent background for the TUI interface",
           "default": false
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "TeamModeConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable team mode (parallel multi-agent coordination)",
+          "default": false
+        },
+        "tmux_visualization": {
+          "type": "boolean",
+          "description": "Visualize team members in tmux panes",
+          "default": false
+        },
+        "max_parallel_members": {
+          "type": "integer",
+          "maximum": 8,
+          "minimum": 1,
+          "description": "Maximum concurrent member spawns (1..8)",
+          "default": 4
+        },
+        "max_members": {
+          "type": "integer",
+          "maximum": 8,
+          "minimum": 1,
+          "description": "Maximum total members per team (1..8)",
+          "default": 8
+        },
+        "max_messages_per_run": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum messages any single member may process per run",
+          "default": 10000
+        },
+        "max_wall_clock_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hard wall-clock cap for any member run in minutes",
+          "default": 120
+        },
+        "max_member_turns": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum LLM turns any single member may consume",
+          "default": 500
+        },
+        "base_dir": {
+          "type": "string",
+          "description": "Override default teams directory (default: ~/.omo/teams or \u003cproject\u003e/.omo/teams)"
+        },
+        "message_payload_max_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "description": "Maximum size of a single inter-agent message payload in bytes",
+          "default": 32768
+        },
+        "recipient_unread_max_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "description": "Maximum unread mailbox size per recipient in bytes",
+          "default": 262144
+        },
+        "mailbox_poll_interval_ms": {
+          "type": "integer",
+          "minimum": 500,
+          "description": "How often members poll their mailbox in milliseconds",
+          "default": 3000
         }
       },
       "additionalProperties": false,
