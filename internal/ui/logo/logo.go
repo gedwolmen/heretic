@@ -56,6 +56,20 @@ func Render(base lipgloss.Style, version string, compact bool, o Opts) string {
 		ColorB: o.TitleColorB,
 		Base:   base,
 	})
+	if compact && !o.Hyper {
+		// Sidebar: use the narrower mascot art from art.txt so it fits
+		// the sidebar without truncation.
+		heretic = RenderSidebarArt(SidebarArtOpts{
+			ColorA: o.TitleColorA,
+			ColorB: o.TitleColorB,
+			Base:   base,
+		})
+		// Sidebar: return just the clean mascot art. The diagonal field
+		// framing and meta row clutter the narrow sidebar, and re-applying
+		// the horizontal gradient onto already-colored art breaks the ANSI
+		// escapes (showing literal "[38;2;...m" text).
+		return heretic
+	}
 	if o.Hyper && compact {
 		hyperName := RenderHereticBlockArt(HereticBlockArtOpts{
 			ColorA: o.TitleColorA,

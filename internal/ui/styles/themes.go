@@ -20,77 +20,77 @@ func ThemeForProvider(providerID string) Styles {
 // for the UI.
 func CharmtonePantera() Styles {
 	s := quickStyle(quickStyleOpts{
-		primary:   charmtone.Charple,
-		secondary: charmtone.Dolly,
-		accent:    charmtone.Bok,
-		keyword:   charmtone.Blush,
+		primary:   charmtone.Guac,
+		secondary: charmtone.Lichen,
+		accent:    charmtone.Orchid,
+		keyword:   charmtone.Lilac,
 
-		fgBase:       charmtone.Sash,
-		fgMoreSubtle: charmtone.Squid,
+		fgBase:       charmtone.Salt,
+		fgMoreSubtle: charmtone.Steep,
 		fgSubtle:     charmtone.Smoke,
-		fgMostSubtle: charmtone.Oyster,
+		fgMostSubtle: charmtone.Squid,
 
-		onPrimary: charmtone.Butter,
+		onPrimary: charmtone.Pepper,
 
 		bgBase:         charmtone.Pepper,
 		bgLeastVisible: charmtone.BBQ,
 		bgLessVisible:  charmtone.Char,
 		bgMostVisible:  charmtone.Iron,
 
-		separator: charmtone.Char,
+		separator: charmtone.Squid,
 
-		destructive:       charmtone.Coral,
-		error:             charmtone.Sriracha,
-		warningSubtle:     charmtone.Zest,
-		warning:           charmtone.Mustard,
-		denied:            charmtone.Tang,
-		busy:              charmtone.Citron,
-		info:              charmtone.Malibu,
-		infoMoreSubtle:    charmtone.Sardine,
-		infoMostSubtle:    charmtone.Damson,
+		destructive:       charmtone.Chili,
+		error:             charmtone.Pom,
+		warningSubtle:     charmtone.Butter,
+		warning:           charmtone.Tang,
+		denied:            charmtone.Salmon,
+		busy:              charmtone.Zest,
+		info:              charmtone.Lichen,
+		infoMoreSubtle:    charmtone.Turtle,
+		infoMostSubtle:    charmtone.Zinc,
 		success:           charmtone.Julep,
-		successMoreSubtle: charmtone.Bok,
-		successMostSubtle: charmtone.Guac,
+		successMoreSubtle: charmtone.Guac,
+		successMostSubtle: charmtone.Gator,
 
 		// ANSI 16-color palette for remapping raw terminal output
 		// (e.g. bang-mode shell commands) onto legible Charmtone colors.
 		ansiBlack:   charmtone.BBQ,
-		ansiRed:     charmtone.Coral,
+		ansiRed:     charmtone.Pom,
 		ansiGreen:   charmtone.Guac,
-		ansiYellow:  charmtone.Mustard,
-		ansiBlue:    charmtone.Charple,
-		ansiMagenta: charmtone.Dolly,
-		ansiCyan:    charmtone.Malibu,
+		ansiYellow:  charmtone.Tang,
+		ansiBlue:    charmtone.Malibu,
+		ansiMagenta: charmtone.Lilac,
+		ansiCyan:    charmtone.Lichen,
 		ansiWhite:   charmtone.Smoke,
 
 		ansiBrightBlack:   charmtone.Iron,
-		ansiBrightRed:     charmtone.Tuna,
+		ansiBrightRed:     charmtone.Coral,
 		ansiBrightGreen:   charmtone.Julep,
 		ansiBrightYellow:  charmtone.Zest,
-		ansiBrightBlue:    charmtone.Guppy,
+		ansiBrightBlue:    charmtone.Sardine,
 		ansiBrightMagenta: charmtone.Blush,
-		ansiBrightCyan:    charmtone.Sardine,
+		ansiBrightCyan:    charmtone.Turtle,
 		ansiBrightWhite:   charmtone.Salt,
 	})
 
-	// Bang ! prompt overrides - use Salt/Hazy/Larple colors.
+	// Bang ! prompt overrides - use Pepper/Lichen/Guac colors.
 	s.Editor.PromptBangIconFocused = s.Editor.PromptBangIconFocused.
-		Foreground(charmtone.Salt).
-		Background(charmtone.Hazy)
+		Foreground(charmtone.Pepper).
+		Background(charmtone.Lichen)
 	s.Editor.PromptBangDotsFocused = s.Editor.PromptBangDotsFocused.
-		Foreground(charmtone.Hazy)
+		Foreground(charmtone.Lichen)
 	s.Editor.PromptBangDotsBlurred = s.Editor.PromptBangDotsBlurred.
-		Foreground(charmtone.Larple)
+		Foreground(charmtone.Guac)
 
-	// Shell bar/prompt overrides - use Charple/Iron/Hazy colors.
+	// Shell bar/prompt overrides - use Guac/Iron/Lichen colors.
 	s.Messages.ShellBarFocused = s.Messages.ShellBarFocused.
-		BorderForeground(charmtone.Charple)
+		BorderForeground(charmtone.Guac)
 	s.Messages.ShellBarBlurred = s.Messages.ShellBarBlurred.
 		BorderForeground(charmtone.Iron)
 	s.Messages.ShellPrompt = s.Messages.ShellPrompt.
-		Foreground(charmtone.Hazy)
+		Foreground(charmtone.Lichen)
 	s.Messages.ShellPromptBlurred = s.Messages.ShellPromptBlurred.
-		Foreground(charmtone.Hazy)
+		Foreground(charmtone.Lichen)
 
 	return s
 }

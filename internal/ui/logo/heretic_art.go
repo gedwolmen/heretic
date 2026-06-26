@@ -58,3 +58,56 @@ func RenderHereticBlockArt(opts HereticBlockArtOpts) string {
 	}
 	return strings.Join(out, "\n")
 }
+
+// SidebarArt is the narrower mascot art (from art.txt) used in the
+// sidebar logo. It is 5 lines tall and ~21 cells wide, so it fits the
+// 30-column sidebar without truncation, unlike the 38-wide HERETIC
+// block art.
+//
+// Visual:
+//
+//	───▄▀▀▀▄▄▄▄▄▄▄▀▀▀▄───
+//	───█▒▒░░░░░░░░░▒▒█───
+//	────█░░█░░░░░█░░█────
+//	─▄▄──█░░░▀█▀░░░█──▄▄─
+//	█░░█─▀▄░░░░░░░▄▀─█░░█
+const SidebarArt = `───▄▀▀▀▄▄▄▄▄▄▄▀▀▀▄───
+───█▒▒░░░░░░░░░▒▒█───
+────█░░█░░░░░█░░█────
+─▄▄──█░░░▀█▀░░░█──▄▄─
+█░░█─▀▄░░░░░░░▄▀─█░░█`
+
+// SidebarArtLines returns the sidebar art as a slice of lines.
+func SidebarArtLines() []string {
+	lines := strings.Split(SidebarArt, "\n")
+	if n := len(lines); n > 0 && lines[n-1] == "" {
+		lines = lines[:n-1]
+	}
+	return lines
+}
+
+// SidebarArtOpts controls per-line coloring of the sidebar art.
+type SidebarArtOpts struct {
+	ColorA color.Color
+	ColorB color.Color
+	Base   lipgloss.Style
+}
+
+// RenderSidebarArt returns the sidebar mascot art with each line
+// colored as a vertical gradient from ColorA to ColorB.
+func RenderSidebarArt(opts SidebarArtOpts) string {
+	lines := SidebarArtLines()
+	if len(lines) == 0 {
+		return ""
+	}
+	out := make([]string, len(lines))
+	for i, line := range lines {
+		t := 0.0
+		if len(lines) > 1 {
+			t = float64(i) / float64(len(lines)-1)
+		}
+		c := interpColor(opts.ColorA, opts.ColorB, t)
+		out[i] = opts.Base.Foreground(c).Render(line)
+	}
+	return strings.Join(out, "\n")
+}

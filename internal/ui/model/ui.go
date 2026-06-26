@@ -44,6 +44,7 @@ import (
 	"github.com/gedwolmen/heretic/internal/fsext"
 	"github.com/gedwolmen/heretic/internal/history"
 	"github.com/gedwolmen/heretic/internal/home"
+	"github.com/gedwolmen/heretic/internal/intentgate"
 	"github.com/gedwolmen/heretic/internal/message"
 	"github.com/gedwolmen/heretic/internal/permission"
 	"github.com/gedwolmen/heretic/internal/pubsub"
@@ -296,6 +297,9 @@ type UI struct {
 	// currentAgent is the main agent for the active session. Updated
 	// when the user picks a new agent in the agent switcher dialog.
 	currentAgent dialog.AgentName
+	// currentMode is the most recent IntentGate mode (ultrawork,
+	// search, analyze, team) detected on the first user message.
+	currentMode string
 	promptQueue        int
 	pillsView          string
 
@@ -2378,6 +2382,7 @@ func (m *UI) drawHeader(scr uv.Screen, area uv.Rectangle) {
 		m.detailsOpen,
 		area.Dx(),
 		m.hyperCredits,
+		m.currentMode,
 	)
 }
 
@@ -2877,7 +2882,7 @@ func (m *UI) generateLayout(w, h int) uiLayout {
 	// The sidebar width
 	sidebarWidth := 30
 	// The header height
-	const landingHeaderHeight = 4
+	const landingHeaderHeight = 6
 
 	var helpKeyMap help.KeyMap = m
 	if m.status != nil && m.status.ShowingAll() {
@@ -3454,6 +3459,16 @@ func (m *UI) attachSkill(skillID, name string) tea.Cmd {
 func (m *UI) sendMessage(content string, attachments ...message.Attachment) tea.Cmd {
 	if !m.com.Workspace.AgentIsReady() {
 		return util.ReportError(fmt.Errorf("coder agent is not initialized"))
+	}
+
+	// Detect IntentGate mode on the first message. We only set the
+	// current mode if we don't already have one for this session,
+	// so the user's initial intent isn't overwritten by later chatter.
+	if m.currentMode == "" {
+		modes := intentgate.Detect(content)
+		if len(modes) > 0 {
+			m.currentMode = string(modes[0])
+		}
 	}
 
 	var cmds []tea.Cmd
@@ -4317,9 +4332,8 @@ func (m *UI) disableDockerMCP() tea.Msg {
 	return util.NewInfoMsg("Docker MCP disabled successfully")
 }
 
-// renderLogo renders the Charm banner + Heretic wordmark. The Charm
-// banner is the colorful 8-line block art that runs across the top;
-// the HERETIC wordmark sits below it.
+// renderLogo renders the Heretic banner + wordmark. The banner is the
+// 5-line HERETIC block art (art.txt); the wordmark sits below it.
 func renderLogo(t *styles.Styles, compact, hyper bool, width int) string {
 	wordmark := logo.Render(t.Logo.GradCanvas, version.Version, compact, logo.Opts{
 		FieldColor:   t.Logo.FieldColor,
@@ -4334,11 +4348,10 @@ func renderLogo(t *styles.Styles, compact, hyper bool, width int) string {
 		// Sidebar: only the wordmark, no banner.
 		return wordmark
 	}
-	// Splash: banner on top, wordmark below.
-	banner := logo.RenderCharmBanner(logo.CharmBannerOpts{
+	// Splash: HERETIC block art (art.txt).
+	return logo.RenderHereticBlockArt(logo.HereticBlockArtOpts{
 		ColorA: t.Logo.TitleColorA,
 		ColorB: t.Logo.TitleColorB,
 		Base:   t.Logo.GradCanvas,
 	})
-	return banner + "\n" + wordmark
 }

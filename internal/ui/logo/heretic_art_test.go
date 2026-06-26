@@ -41,3 +41,25 @@ func TestRenderHereticBlockArt(t *testing.T) {
 	// 5 lines joined with \n produces 4 newlines.
 	require.Equal(t, 4, strings.Count(out, "\n"))
 }
+
+func TestSidebarArtLines(t *testing.T) {
+	t.Parallel()
+	lines := SidebarArtLines()
+	require.Len(t, lines, 5)
+	for i, l := range lines {
+		require.NotEmpty(t, l, "line %d is empty", i)
+	}
+}
+
+func TestRenderSidebarArt(t *testing.T) {
+	t.Parallel()
+	opts := SidebarArtOpts{
+		ColorA: lipgloss.Color("#12C78F"),
+		ColorB: lipgloss.Color("#5CDFEA"),
+		Base:   lipgloss.NewStyle(),
+	}
+	out := RenderSidebarArt(opts)
+	require.NotEmpty(t, out)
+	require.True(t, strings.Contains(out, "\x1b["))
+	require.Equal(t, 4, strings.Count(out, "\n"))
+}
